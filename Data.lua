@@ -1,9 +1,3 @@
--- ======================================================
--- core/data/data.lua
--- Data monster per Sea, CheckLevel(), CheckBossQuest(),
--- MaterialMon(), tableMon, AreaList
--- ======================================================
-
 local QuestNPCMap = {
     ["BanditQuest1"] = "Bandit Quest Giver",
     ["JungleQuest"] = "Jungle Quest Giver",
@@ -43,7 +37,6 @@ local QuestNPCMap = {
     ["AbyssalQuest2"] = "Void Quest Giver",
     ["CoreQuest"] = "Core Quest Giver"
 }
-
 local function GetQuestCFrame(npcName, questName, defaultCFrame)
     local actualNpcName = QuestNPCMap[questName] or npcName
     local npcs = workspace:FindFirstChild("NPCs")
@@ -62,7 +55,6 @@ local function GetQuestCFrame(npcName, questName, defaultCFrame)
     end
     return defaultCFrame
 end
-
 local function GetEnemySpawnCFrame(monName, defaultCFrame)
     local spawns = workspace:FindFirstChild("_WorldOrigin") and workspace._WorldOrigin:FindFirstChild("EnemySpawns")
     if spawns then
@@ -82,7 +74,6 @@ local function GetEnemySpawnCFrame(monName, defaultCFrame)
     end
     return defaultCFrame
 end
-
 function CheckLevel()
     local v7 = game:GetService("Players").LocalPlayer.Data.Level.Value
     if Sea1 then
@@ -1298,6 +1289,4 @@ function MaterialMon()
         MPos = CFrame.new(295, 73, - 56)
         SP = "Default"
     end
-end
-
-
+end

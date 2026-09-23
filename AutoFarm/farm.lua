@@ -1,8 +1,3 @@
--- ========================================================================================
--- [PURE FARM] BLOCKS FRUITS AUTO FARM (NO UI)
--- Didesain murni untuk stabilitas (Anti-Jitter) & Damage masuk 100% (VirtualUser)
--- ========================================================================================
-
 local player = game:GetService("Players").LocalPlayer
 local RS = game:GetService("ReplicatedStorage")
 local TS = game:GetService("TweenService")
@@ -10,29 +5,19 @@ local RunService = game:GetService("RunService")
 local VirtualUser = game:GetService("VirtualUser")
 local commF = RS:WaitForChild("Remotes"):WaitForChild("CommF_")
 local workspace = game:GetService("Workspace")
-
 _G.PureAutoFarm = true
-_G.WeaponType = "Melee" -- Ganti "Sword" atau "Blox Fruit" jika perlu
-
--- Set Sea Environments for data.lua
+_G.WeaponType = "Melee" 
 getgenv().Sea1 = game.PlaceId == 2753915549
 getgenv().Sea2 = game.PlaceId == 4442274612
 getgenv().Sea3 = game.PlaceId == 7449423635
 getgenv().SelectMonster = getgenv().SelectMonster or ""
-
--- Load data.lua from GitHub (vtrunc repository)
 task.spawn(function()
     local s, err = pcall(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/wh1tehourse/vtrunc/main/data.lua"))()
     end)
     if not s then warn("Failed to load data.lua: ", err) end
 end)
-
--- ==========================================
--- 1. DATABASE QUEST (Bisa ditambah nanti)
--- ==========================================
 local function GetQuestData(level)
-    -- Integrasi CheckLevel jika data.lua sudah di-load di game
     if CheckLevel then
         local s, err = pcall(CheckLevel)
         if s and getgenv().Ms and getgenv().NameQuest and getgenv().QuestLv and getgenv().CFrameQ and getgenv().CFrameMon then
@@ -41,8 +26,6 @@ local function GetQuestData(level)
             return Ms, NameQuest, QuestLv, CFrameQ, CFrameMon
         end
     end
-    
-    -- Database Built-in Tiki Outpost & Fallbacks
     if level >= 2575 then
         return "Skull Slayer", "TikiQuest3", 2, 
             CFrame.new(-16665.19, 104.60, 1579.69), 
@@ -68,23 +51,16 @@ local function GetQuestData(level)
             CFrame.new(-16549.89, 55.69, -179.91), 
             CFrame.new(-16162.82, 11.69, -96.45)
     else
-        -- Fallback Starter Sea 1 Bandit
         return "Bandit", "BanditQuest1", 1, 
             CFrame.new(1060.94, 16.46, 1547.78), 
             CFrame.new(1038.55, 41.30, 1576.51)
     end
 end
-
--- ==========================================
--- 2. HELPER FUNCTIONS (ANTI JITTER & DAMAGE)
--- ==========================================
 local function AntiJitter()
     local char = player.Character
     if not char then return end
     local hrp = char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-    
-    -- Memakai BodyVelocity agar karakter melayang stabil, tidak butuh spam CFrame tiap frame
     local bv = hrp:FindFirstChild("FarmBV")
     if not bv then
         bv = Instance.new("BodyVelocity")
@@ -93,15 +69,12 @@ local function AntiJitter()
         bv.Velocity = Vector3.new(0, 0, 0)
         bv.Parent = hrp
     end
-    
-    -- Nonaktifkan noclip/jatuh
     for _, part in pairs(char:GetDescendants()) do
         if part:IsA("BasePart") then
             part.CanCollide = false
         end
     end
 end
-
 local function EquipWeapon()
     local char = player.Character
     if not char then return end
@@ -112,38 +85,29 @@ local function EquipWeapon()
         end
     end
 end
-
 local function AutoHaki()
     if player.Character and not player.Character:FindFirstChild("HasBuso") then
         pcall(function() commF:InvokeServer("Buso") end)
     end
 end
-
--- Diagnosis System
 local hitCounters = {}
 local lastHealths = {}
-
 local function DiagnosticDamage(mob)
     if not mob or not mob:FindFirstChild("Humanoid") then return end
     local mobName = mob.Name
     local health = mob.Humanoid.Health
-    
     if not hitCounters[mobName] then
         hitCounters[mobName] = 0
         lastHealths[mobName] = health
     end
-    
     if health < lastHealths[mobName] then
         hitCounters[mobName] = 0
         lastHealths[mobName] = health
         return
     end
-    
     hitCounters[mobName] = hitCounters[mobName] + 1
-    
     if hitCounters[mobName] > 30 then
         local diag = "[DIAGNOSIS DETEKTIF: NO DAMAGE]\nTarget: " .. mobName .. "\n"
-        
         local char = player.Character
         local tool = char and char:FindFirstChildOfClass("Tool")
         if not tool then
@@ -151,7 +115,6 @@ local function DiagnosticDamage(mob)
         else
             diag = diag .. "✅ SENJATA: OK (" .. tool.Name .. ")\n"
         end
-        
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         local mobHrp = mob:FindFirstChild("HumanoidRootPart")
         if hrp and mobHrp then
@@ -162,7 +125,6 @@ local function DiagnosticDamage(mob)
                 diag = diag .. "✅ JARAK FISIK: Dekat (" .. math.floor(dist) .. " stud).\n"
             end
         end
-        
         local env = getgenv and getgenv() or _G
         local cfHooked = false
         if env.CombatFramework and env.CombatFramework.activeController then
@@ -171,35 +133,26 @@ local function DiagnosticDamage(mob)
         else
             diag = diag .. "❌ COMBAT_FRAMEWORK: Gagal di-hook! Executor memblokir require.\n"
         end
-        
         diag = diag .. "=> KESIMPULAN: "
         if not cfHooked then
             diag = diag .. "Metode utama gagal karena CombatFramework diblokir oleh executor Arceus X. Kita butuh ganti ke metode NetworkOwnership (Spam klik biasa tapi jarak mob 0)."
         else
             diag = diag .. "CombatFramework sukses, senjata OK. Tapi damage ga masuk karena mob ngalamin DESYNC (di layar lu keseret ke bawah, tapi di server mob-nya ketinggalan di atas/belakang)."
         end
-        
         warn(diag)
         if setclipboard then setclipboard(diag) end
         hitCounters[mobName] = 0
     end
 end
-
--- Attack via CombatFramework / Tool Activation
 local VIM = game:GetService("VirtualInputManager")
 local function Attack(enemiesTable)
     if #enemiesTable == 0 then return end
-    
     local char = player.Character
     local tool = char and char:FindFirstChildOfClass("Tool")
     if not tool then return end
-    
-    -- METHOD 1: Tool Activate (Native Roblox)
     pcall(function()
         tool:Activate()
     end)
-    
-    -- METHOD 2: CombatFramework (Standard Blox Fruits Exploit)
     pcall(function()
         local env = getgenv and getgenv() or _G
         if not env.CombatFramework then
@@ -212,56 +165,38 @@ local function Attack(enemiesTable)
             activeController:attack()
         end
     end)
-    
-    -- METHOD 3: VirtualInputManager (Simulasi Klik Layar Native Mobile)
     pcall(function()
         VIM:SendMouseButtonEvent(0, 0, 0, true, game, 1)
         task.wait(0.02)
         VIM:SendMouseButtonEvent(0, 0, 0, false, game, 1)
     end)
-    
-    -- Pantau darah mob pertama
     DiagnosticDamage(enemiesTable[1][1])
 end
-
--- ==========================================
--- 3. MOVEMENT & MAGNET (BRING MOB)
--- ==========================================
 local currentTween = nil
 local function Tween(targetCFrame)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return 9999 end
-    
     local dist = (hrp.Position - targetCFrame.Position).Magnitude
-    
-    -- Kalau sudah sangat dekat, tidak usah tween berlebihan (mencegah getar)
     if dist < 5 then 
         if currentTween then currentTween:Cancel() end
         return dist 
     end
-    
     local speed = 300
     if dist < 100 then speed = 150 end
-    
     if currentTween then currentTween:Cancel() end
     local tweenInfo = TweenInfo.new(dist / speed, Enum.EasingStyle.Linear)
     currentTween = TS:Create(hrp, tweenInfo, {CFrame = targetCFrame})
     currentTween:Play()
-    
     return dist
 end
-
 local function MagnetMobs(NameMon, anchorCFrame, primaryMob)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return {} end
-    
     local enemiesToHit = {}
     for _, mob in pairs(workspace.Enemies:GetChildren()) do
         if mob.Name == NameMon and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
             local mobHrp = mob:FindFirstChild("HumanoidRootPart")
             if mobHrp and (hrp.Position - mobHrp.Position).Magnitude < 300 then
-                -- 1. ANTI-FLING: Matikan tabrakan & netralkan velocity pada SEMUA bagian tubuh monster
-                -- (Jika hanya mobHrp yang CanCollide=false, Torso/Head/Kaki akan saling bentrok dan meluncur ke langit!)
                 for _, part in pairs(mob:GetDescendants()) do
                     if part:IsA("BasePart") then
                         part.CanCollide = false
@@ -270,48 +205,31 @@ local function MagnetMobs(NameMon, anchorCFrame, primaryMob)
                         part.Velocity = Vector3.zero
                     end
                 end
-                
-                -- 2. Tarik mob pendamping persis ke lokasi target mob di tanah
-                -- Primary mob TIDAK dipindahkan posisinya agar tetap di ground alami & tidak memicu reset anti-leash server!
                 if mob ~= primaryMob then
                     mobHrp.CFrame = anchorCFrame
                 end
-                
-                -- 3. Hitbox proporsional (10 stud, bukan 60!). 60 stud tembus ke dalam tanah & memicu physics fling.
                 mobHrp.Size = Vector3.new(10, 10, 10)
                 mob.Humanoid.WalkSpeed = 0
                 mob.Humanoid.JumpPower = 0
-                mob.Humanoid:ChangeState(11) -- Stun
+                mob.Humanoid:ChangeState(11) 
                 table.insert(enemiesToHit, {mob, mobHrp})
             end
         end
     end
     return enemiesToHit
 end
-
--- ==========================================
--- 4. MAIN FARMING LOGIC
--- ==========================================
 local questFailedCount = 0
 local bypassQuest = false
-
 task.spawn(function()
     warn("[PURE FARM] Script Dimulai. Anti-Fling & Ground-Anchor Aktif.")
-    
     while _G.PureAutoFarm and task.wait(0.1) do
         local char = player.Character
         local hrp = char and char:FindFirstChild("HumanoidRootPart")
         if not hrp or char.Humanoid.Health <= 0 then continue end
-        
-        -- Nyalakan BodyVelocity biar karakter ngambang & gak getar
         AntiJitter()
-        
         local level = player.Data.Level.Value
         local NameMon, NameQuest, QuestLv, CFrameQ, CFrameMon = GetQuestData(level)
-        
         local questActive = player.PlayerGui.Main.Quest.Visible
-        
-        -- STEP A: AMBIL QUEST
         if not questActive and not bypassQuest then
             local targetPos = CFrameQ * CFrame.new(0, 5, 0)
             local dist = (hrp.Position - targetPos.Position).Magnitude
@@ -319,9 +237,8 @@ task.spawn(function()
                 Tween(targetPos)
             else
                 if currentTween then currentTween:Cancel() currentTween = nil end
-                hrp.CFrame = targetPos -- Kunci posisi sebentar saat ngambil quest
+                hrp.CFrame = targetPos 
                 task.wait(0.5)
-                
                 local res = commF:InvokeServer("StartQuest", NameQuest, QuestLv)
                 if res == "Quest Already Active" or player.PlayerGui.Main.Quest.Visible then
                     questFailedCount = 0
@@ -329,30 +246,23 @@ task.spawn(function()
                 else
                     questFailedCount = questFailedCount + 1
                     warn("[PURE FARM] Server Menolak Quest. Percobaan ke-" .. tostring(questFailedCount))
-                    
                     if questFailedCount > 3 then
                         warn("[PURE FARM] Quest gagal 3x. BYPASS DIAKTIFKAN. Langsung eksekusi Mob!")
                         bypassQuest = true
                     end
                 end
             end
-            
-        -- STEP B: BANTAI MONSTER
         else
-            -- Cari target monster utama yang valid dan TIDAK melayang di langit
             local primaryMob = nil
             for _, mob in pairs(workspace.Enemies:GetChildren()) do
                 if mob.Name == NameMon and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
                     local mHrp = mob:FindFirstChild("HumanoidRootPart")
-                    -- Pastikan ketinggian wajar (tidak melayang ribuan stud akibat bug sebelumnya)
                     if mHrp and math.abs(mHrp.Position.Y - CFrameMon.Position.Y) < 120 then
                         primaryMob = mob
                         break
                     end
                 end
             end
-            
-            -- Fallback jika semua monster sedang di luar rentang Y
             if not primaryMob then
                 for _, mob in pairs(workspace.Enemies:GetChildren()) do
                     if mob.Name == NameMon and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
@@ -363,34 +273,25 @@ task.spawn(function()
                     end
                 end
             end
-            
             if primaryMob then
                 local mobHrp = primaryMob:FindFirstChild("HumanoidRootPart")
                 if mobHrp then
                     local groundCFrame = mobHrp.CFrame
                     local groundPos = mobHrp.Position
-                    
-                    -- Player ngambang 18 stud persis di atas target mob, menghadap ke bawah
                     local farmPos = CFrame.new(groundPos + Vector3.new(0, 18, 0), groundPos)
                     local dist = (hrp.Position - farmPos.Position).Magnitude
-                    
                     if dist > 40 then
                         Tween(farmPos)
                     else
                         if currentTween then currentTween:Cancel() currentTween = nil end
-                        hrp.CFrame = farmPos -- Kunci posisi melayang
+                        hrp.CFrame = farmPos 
                     end
-                    
-                    -- Eksekusi Serangan
                     AutoHaki()
                     EquipWeapon()
-                    
-                    -- Kumpulkan mob lain ke titik primaryMob di tanah (tanpa melempar ke langit)
                     local enemies = MagnetMobs(NameMon, groundCFrame, primaryMob)
                     Attack(enemies)
                 end
             else
-                -- Jika belum ada monster spawn, tunggu melayang 20 stud di atas titik spawn
                 local waitPos = CFrameMon * CFrame.new(0, 20, 0)
                 local dist = (hrp.Position - waitPos.Position).Magnitude
                 if dist > 15 then
