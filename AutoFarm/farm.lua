@@ -423,19 +423,32 @@ task.spawn(function()
                 local mobHrp = mob:FindFirstChild("HumanoidRootPart")
                 if not mobHrp then continue end
 
-                local mobPos = mobHrp.Position
+                -- AUTO DODGE (Animation & Skill Cast Based)
+                local isAttacking = false
+                local animator = mob.Humanoid:FindFirstChild("Animator")
+                if animator then
+                    for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                        local tName = tostring(track.Name):lower()
+                        -- Deteksi: kalo ada animasi selain jalan/idle/fall, berarti dia lagi cast skill/attack
+                        if not tName:find("walk") and not tName:find("idle") and not tName:find("run") and not tName:find("fall") then
+                            isAttacking = true
+                            break
+                        end
+                    end
+                end
+
+                local farmPos
+                if isAttacking then
+                    -- Mob keluarin skill -> Blink dodge ke belakang badannya (aman dari hitbox lurus)
+                    farmPos = mobHrp.CFrame * CFrame.new(0, 12, 12)
+                else
+                    -- Normal -> Diem statis di atas kepala
+                    farmPos = mobHrp.CFrame * CFrame.new(0, 9, 0)
+                end
                 
-                -- AUTO DODGE / ORBIT LOGIC
-                -- Jarak dipersempit biar serangan melee/sword tetep masuk!
-                local isBoss = (mob.Humanoid.MaxHealth > 60000)
-                local radius = isBoss and 6 or 4    -- Radius sangat dekat (ngitarin mob)
-                local yOffset = isBoss and 10 or 8  -- Posisi di atas kepala dikit
-                local orbitSpeed = isBoss and 5 or 3 -- Muter lebih cepet kalo lawan boss
-                
-                local t = tick() * orbitSpeed
-                local orbitOffset = Vector3.new(math.cos(t) * radius, yOffset, math.sin(t) * radius)
-                local farmPos = CFrame.new(mobPos + orbitOffset, mobPos)
-                
+                -- Rata-in posisi (biar CFrame kita lurus ngadep mob)
+                farmPos = CFrame.new(farmPos.Position, Vector3.new(mobHrp.Position.X, farmPos.Position.Y, mobHrp.Position.Z))
+
                 local dist = (hrp.Position - farmPos.Position).Magnitude
 
                 if dist > 30 then
