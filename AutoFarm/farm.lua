@@ -303,6 +303,21 @@ local function LogError(category, message)
     warn("[FARM ERR] " .. entry)
 end
 
+local function AutoStats()
+    pcall(function()
+        local points = player.Data.Points.Value
+        if points > 0 then
+            local melee = player.Data.Stats.Melee.Level.Value
+            local defense = player.Data.Stats.Defense.Level.Value
+            if melee < 2550 then
+                commF:InvokeServer("AddPoint", "Melee", points)
+            elseif defense < 2550 then
+                commF:InvokeServer("AddPoint", "Defense", points)
+            end
+        end
+    end)
+end
+
 local questFailedCount = 0
 local bypassQuest = false
 local questCooldown = 0
@@ -329,6 +344,7 @@ task.spawn(function()
 
         AntiJitter()
         UpdateStats()
+        AutoStats()
 
         local level = nil
         local ls = pcall(function() level = player.Data.Level.Value end)
