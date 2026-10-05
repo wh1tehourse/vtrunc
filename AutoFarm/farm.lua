@@ -426,10 +426,11 @@ task.spawn(function()
                 local mobPos = mobHrp.Position
                 
                 -- AUTO DODGE / ORBIT LOGIC
+                -- Jarak dipersempit biar serangan melee/sword tetep masuk!
                 local isBoss = (mob.Humanoid.MaxHealth > 60000)
-                local radius = isBoss and 15 or 7
-                local yOffset = isBoss and 22 or 12
-                local orbitSpeed = isBoss and 3.5 or 2
+                local radius = isBoss and 6 or 4    -- Radius sangat dekat (ngitarin mob)
+                local yOffset = isBoss and 10 or 8  -- Posisi di atas kepala dikit
+                local orbitSpeed = isBoss and 5 or 3 -- Muter lebih cepet kalo lawan boss
                 
                 local t = tick() * orbitSpeed
                 local orbitOffset = Vector3.new(math.cos(t) * radius, yOffset, math.sin(t) * radius)
