@@ -424,7 +424,17 @@ task.spawn(function()
                 if not mobHrp then continue end
 
                 local mobPos = mobHrp.Position
-                local farmPos = CFrame.new(mobPos + Vector3.new(0, 12, 0), mobPos)
+                
+                -- AUTO DODGE / ORBIT LOGIC
+                local isBoss = (mob.Humanoid.MaxHealth > 60000)
+                local radius = isBoss and 15 or 7
+                local yOffset = isBoss and 22 or 12
+                local orbitSpeed = isBoss and 3.5 or 2
+                
+                local t = tick() * orbitSpeed
+                local orbitOffset = Vector3.new(math.cos(t) * radius, yOffset, math.sin(t) * radius)
+                local farmPos = CFrame.new(mobPos + orbitOffset, mobPos)
+                
                 local dist = (hrp.Position - farmPos.Position).Magnitude
 
                 if dist > 30 then
