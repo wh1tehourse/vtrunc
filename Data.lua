@@ -705,13 +705,41 @@ function CheckLevel()
             NameMon = "Serpent Hunter"
             CFrameQ = GetQuestCFrame(NameMon, NameQuest, CFrame.new(- 16665.19140625, 104.59640502929688, 1579.6943359375))
             CFrameMon = GetEnemySpawnCFrame(NameMon, CFrame.new(- 16621.4140625, 121.40631103515625, 1290.6881103515625))
-        elseif v7 >= 2575 or SelectMonster == "Skull Slayer" then
+        elseif v7 == 2575 or (v7 <= 2599 or SelectMonster == "Skull Slayer") then
             Ms = "Skull Slayer"
             NameQuest = "TikiQuest3"
             QuestLv = 2
             NameMon = "Skull Slayer"
             CFrameQ = GetQuestCFrame(NameMon, NameQuest, CFrame.new(- 16665.19140625, 104.59640502929688, 1579.6943359375))
             CFrameMon = GetEnemySpawnCFrame(NameMon, CFrame.new(- 16811.5703125, 84.625244140625, 1542.235107421875))
+        elseif v7 == 2600 or (v7 <= 2624 or SelectMonster == "Reef Bandits") then
+            Ms = "Reef Bandits"
+            NameQuest = "SubmergedQuest1"
+            QuestLv = 1
+            NameMon = "Reef Bandits"
+            CFrameQ = GetQuestCFrame(NameMon, NameQuest, CFrame.new(0, 0, 0))
+            CFrameMon = GetEnemySpawnCFrame(NameMon, CFrame.new(0, 0, 0))
+        elseif v7 == 2625 or (v7 <= 2649 or SelectMonster == "Coral Pirates") then
+            Ms = "Coral Pirates"
+            NameQuest = "SubmergedQuest1"
+            QuestLv = 2
+            NameMon = "Coral Pirates"
+            CFrameQ = GetQuestCFrame(NameMon, NameQuest, CFrame.new(0, 0, 0))
+            CFrameMon = GetEnemySpawnCFrame(NameMon, CFrame.new(0, 0, 0))
+        elseif v7 == 2650 or (v7 <= 2674 or SelectMonster == "Sea Chanters") then
+            Ms = "Sea Chanters"
+            NameQuest = "SubmergedQuest2"
+            QuestLv = 1
+            NameMon = "Sea Chanters"
+            CFrameQ = GetQuestCFrame(NameMon, NameQuest, CFrame.new(0, 0, 0))
+            CFrameMon = GetEnemySpawnCFrame(NameMon, CFrame.new(0, 0, 0))
+        elseif v7 >= 2675 or SelectMonster == "Ocean Prophets" then
+            Ms = "Ocean Prophets"
+            NameQuest = "SubmergedQuest2"
+            QuestLv = 2
+            NameMon = "Ocean Prophets"
+            CFrameQ = GetQuestCFrame(NameMon, NameQuest, CFrame.new(0, 0, 0))
+            CFrameMon = GetEnemySpawnCFrame(NameMon, CFrame.new(0, 0, 0))
         end
     end
 end

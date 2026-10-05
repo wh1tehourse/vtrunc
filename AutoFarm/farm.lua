@@ -83,7 +83,23 @@ local function GetQuestData(level)
             return Ms, NameQuest, QuestLv, CFrameQ, CFrameMon
         end
     end
-    if level >= 2575 then
+    if level >= 2675 then
+        return "Ocean Prophets", "SubmergedQuest2", 2,
+            CFrame.new(0, 0, 0),
+            CFrame.new(0, 0, 0)
+    elseif level >= 2650 then
+        return "Sea Chanters", "SubmergedQuest2", 1,
+            CFrame.new(0, 0, 0),
+            CFrame.new(0, 0, 0)
+    elseif level >= 2625 then
+        return "Coral Pirates", "SubmergedQuest1", 2,
+            CFrame.new(0, 0, 0),
+            CFrame.new(0, 0, 0)
+    elseif level >= 2600 then
+        return "Reef Bandits", "SubmergedQuest1", 1,
+            CFrame.new(0, 0, 0),
+            CFrame.new(0, 0, 0)
+    elseif level >= 2575 then
         return "Skull Slayer", "TikiQuest3", 2,
             CFrame.new(-16665.19, 104.60, 1579.69),
             CFrame.new(-16811.57, 84.63, 1542.24)
@@ -423,13 +439,11 @@ task.spawn(function()
                 local mobHrp = mob:FindFirstChild("HumanoidRootPart")
                 if not mobHrp then continue end
 
-                -- AUTO DODGE (Animation & Skill Cast Based)
                 local isAttacking = false
                 local animator = mob.Humanoid:FindFirstChild("Animator")
                 if animator then
                     for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
                         local tName = tostring(track.Name):lower()
-                        -- Deteksi: kalo ada animasi selain jalan/idle/fall, berarti dia lagi cast skill/attack
                         if not tName:find("walk") and not tName:find("idle") and not tName:find("run") and not tName:find("fall") then
                             isAttacking = true
                             break
@@ -439,14 +453,11 @@ task.spawn(function()
 
                 local farmPos
                 if isAttacking then
-                    -- Mob keluarin skill -> Blink dodge ke belakang badannya (aman dari hitbox lurus)
                     farmPos = mobHrp.CFrame * CFrame.new(0, 12, 12)
                 else
-                    -- Normal -> Diem statis di atas kepala
                     farmPos = mobHrp.CFrame * CFrame.new(0, 9, 0)
                 end
                 
-                -- Rata-in posisi (biar CFrame kita lurus ngadep mob)
                 farmPos = CFrame.new(farmPos.Position, Vector3.new(mobHrp.Position.X, farmPos.Position.Y, mobHrp.Position.Z))
 
                 local dist = (hrp.Position - farmPos.Position).Magnitude
