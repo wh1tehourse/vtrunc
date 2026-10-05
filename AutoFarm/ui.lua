@@ -1,19 +1,9 @@
-----------------------------------------------------------------
---  FARM NOTIFIER v2 — Draggable Mini Status Bar
---  Load via: getgenv().FarmNotifier = loadstring(...)()
---  API:
---    notifier.update(mobName, statusText, statusType)
---    notifier.stat(key, value)   -- update stats row
---    notifier.destroy()
---  StatusTypes: "farming", "travel", "quest", "waiting", "error"
-----------------------------------------------------------------
 local player = game:GetService("Players").LocalPlayer
 local TS = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
 
 local notifier = {}
 
--- Cleanup old instance
 local oldGui = player.PlayerGui:FindFirstChild("FarmNotifier")
 if oldGui then oldGui:Destroy() end
 
@@ -24,9 +14,6 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.DisplayOrder = 999
 gui.Parent = player.PlayerGui
 
--- ═══════════════════════════════════════
---  MAIN BAR (compact, dark, rounded)
--- ═══════════════════════════════════════
 local bar = Instance.new("Frame")
 bar.Name = "Bar"
 bar.Size = UDim2.new(0, 280, 0, 34)
@@ -47,7 +34,6 @@ barStroke.Thickness = 1
 barStroke.Transparency = 0.4
 barStroke.Parent = bar
 
--- Accent line (thin top edge, changes color with status)
 local accent = Instance.new("Frame")
 accent.Name = "Accent"
 accent.Size = UDim2.new(1, -16, 0, 2)
@@ -58,7 +44,6 @@ accent.Parent = bar
 
 Instance.new("UICorner", accent).CornerRadius = UDim.new(0, 1)
 
--- Status dot (colored circle indicator)
 local dot = Instance.new("Frame")
 dot.Name = "Dot"
 dot.Size = UDim2.new(0, 8, 0, 8)
@@ -69,7 +54,6 @@ dot.Parent = bar
 
 Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
 
--- Mob name label (left)
 local mobLabel = Instance.new("TextLabel")
 mobLabel.Name = "MobLabel"
 mobLabel.Size = UDim2.new(0, 130, 1, 0)
@@ -83,7 +67,6 @@ mobLabel.TextXAlignment = Enum.TextXAlignment.Left
 mobLabel.TextTruncate = Enum.TextTruncate.AtEnd
 mobLabel.Parent = bar
 
--- Status text (right)
 local statusLabel = Instance.new("TextLabel")
 statusLabel.Name = "StatusLabel"
 statusLabel.Size = UDim2.new(0, 110, 1, 0)
@@ -97,9 +80,6 @@ statusLabel.TextXAlignment = Enum.TextXAlignment.Right
 statusLabel.TextTruncate = Enum.TextTruncate.AtEnd
 statusLabel.Parent = bar
 
--- ═══════════════════════════════════════
---  STATS ROW (tiny bar below, shows kills/min etc)
--- ═══════════════════════════════════════
 local statsBar = Instance.new("Frame")
 statsBar.Name = "StatsBar"
 statsBar.Size = UDim2.new(0, 220, 0, 18)
@@ -130,9 +110,6 @@ statsLabel.Font = Enum.Font.Gotham
 statsLabel.TextXAlignment = Enum.TextXAlignment.Center
 statsLabel.Parent = statsBar
 
--- ═══════════════════════════════════════
---  DRAG LOGIC (both bar + stats bar move together)
--- ═══════════════════════════════════════
 local dragging = false
 local dragInput = nil
 local dragStart = nil
@@ -175,9 +152,6 @@ UIS.InputChanged:Connect(function(input)
     end
 end)
 
--- ═══════════════════════════════════════
---  PUBLIC API
--- ═══════════════════════════════════════
 local STATUS_COLORS = {
     farming  = Color3.fromRGB(80, 200, 120),
     travel   = Color3.fromRGB(90, 155, 255),
@@ -210,6 +184,5 @@ function notifier.destroy()
     pcall(function() gui:Destroy() end)
 end
 
--- Expose globally and return
 getgenv().FarmNotifier = notifier
 return notifier

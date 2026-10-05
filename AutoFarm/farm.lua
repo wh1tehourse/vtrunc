@@ -1,14 +1,3 @@
-----------------------------------------------------------------
---  SAFE FARM v3 — Optimized & Modular
---  Changes from v2:
---    • UI moved to notifier.lua (loaded separately)
---    • Anti-AFK built-in
---    • Kill priority: lowest HP mob first → faster quest completion
---    • Auto server-hop on prolonged idle (optional)
---    • Stats tracking: kills, elapsed time, kills/min
---    • Smarter quest cycle: instant re-take on completion
---    • Adaptive attack speed based on weapon tooltip
-----------------------------------------------------------------
 local player = game:GetService("Players").LocalPlayer
 local RS = game:GetService("ReplicatedStorage")
 local TS = game:GetService("TweenService")
@@ -17,19 +6,16 @@ local VirtualUser = game:GetService("VirtualUser")
 local commF = RS:WaitForChild("Remotes"):WaitForChild("CommF_")
 local workspace = game:GetService("Workspace")
 
--- ══════════════ CONFIG ══════════════
 _G.PureAutoFarm = true
 _G.WeaponType = "Melee"
-_G.AutoServerHop = false       -- set true to hop if stuck >60s
-_G.ServerHopTimeout = 60       -- seconds before hop
+_G.AutoServerHop = false
+_G.ServerHopTimeout = 60
 
 getgenv().Sea1 = game.PlaceId == 2753915549
 getgenv().Sea2 = game.PlaceId == 4442274612
 getgenv().Sea3 = game.PlaceId == 7449423635
 getgenv().SelectMonster = getgenv().SelectMonster or ""
 
--- ══════════════ LOAD DEPENDENCIES ══════════════
--- Load quest data
 task.spawn(function()
     local s, err = pcall(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/wh1tehourse/vtrunc/main/data.lua"))()
@@ -37,12 +23,11 @@ task.spawn(function()
     if not s then warn("[FARM] Failed to load data.lua: ", err) end
 end)
 
--- Load notifier UI (separate module)
 local notifier = nil
 task.spawn(function()
     local s, result = pcall(function()
         return loadstring(game:HttpGet(
-            "https://raw.githubusercontent.com/wh1tehourse/vtrunc/main/AutoFarm/notifier.lua"
+            "https://raw.githubusercontent.com/wh1tehourse/vtrunc/main/AutoFarm/ui.lua"
         ))()
     end)
     if s and result then
@@ -50,8 +35,6 @@ task.spawn(function()
     elseif getgenv().FarmNotifier then
         notifier = getgenv().FarmNotifier
     else
-        warn("[FARM] Notifier failed to load, using fallback")
-        -- Fallback: silent notifier (no UI, just warn)
         notifier = {
             update = function(_, mob, status, sType)
                 if sType == "error" then warn("[FARM] " .. tostring(mob) .. " | " .. tostring(status)) end
@@ -62,7 +45,6 @@ task.spawn(function()
     end
 end)
 
--- Wait for notifier to be ready (max 5s)
 local waitStart = tick()
 while not notifier and tick() - waitStart < 5 do task.wait(0.1) end
 if not notifier then
@@ -73,14 +55,12 @@ if not notifier then
     }
 end
 
--- ══════════════ ANTI-AFK ══════════════
 local antiAfkConn = nil
 antiAfkConn = player.Idled:Connect(function()
     pcall(function() VirtualUser:CaptureController() end)
     pcall(function() VirtualUser:ClickButton2(Vector2.new()) end)
 end)
 
--- ══════════════ STATS TRACKER ══════════════
 local stats = {
     kills = 0,
     startTime = tick(),
@@ -94,7 +74,6 @@ local function UpdateStats()
     notifier.stat("⚔ " .. stats.kills .. " kills | " .. kpm .. "/min | " .. mins .. "m")
 end
 
--- ══════════════ QUEST DATA ══════════════
 local function GetQuestData(level)
     if CheckLevel then
         local s, err = pcall(CheckLevel)
@@ -135,9 +114,6 @@ local function GetQuestData(level)
     end
 end
 
--- ══════════════ UTILITY FUNCTIONS (SAFE) ══════════════
-
--- AntiJitter: BodyPosition (finite force) + HRP-only collision off
 local function AntiJitter()
     local char = player.Character
     if not char then return end
@@ -167,7 +143,6 @@ local function CleanupAntiJitter()
     end)
 end
 
--- EquipWeapon (returns success bool)
 local function EquipWeapon()
     local char = player.Character
     if not char then return false end
@@ -182,25 +157,22 @@ local function EquipWeapon()
     return false
 end
 
--- AutoHaki
 local lastHakiTick = 0
 local function AutoHaki()
-    if tick() - lastHakiTick < 2 then return end  -- don't spam haki
+    if tick() - lastHakiTick < 2 then return end
     if player.Character and not player.Character:FindFirstChild("HasBuso") then
         pcall(function() commF:InvokeServer("Buso") end)
         lastHakiTick = tick()
     end
 end
 
--- Attack: natural timing, adaptive cooldown by weapon type
 local VIM = game:GetService("VirtualInputManager")
 local lastAttackTick = 0
 
 local function GetAttackCooldown()
-    -- Sword = faster, Blox Fruit = slower
     if _G.WeaponType == "Melee" then return 0.32 end
     if _G.WeaponType == "Sword" then return 0.35 end
-    return 0.4 -- Blox Fruit / other
+    return 0.4
 end
 
 local function Attack()
@@ -223,7 +195,6 @@ local function Attack()
     return true
 end
 
--- Tween: capped 120 stud/s
 local currentTween = nil
 local function Tween(targetCFrame)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
@@ -241,7 +212,6 @@ local function Tween(targetCFrame)
     return dist
 end
 
--- SmoothTP: fast but not instant
 local function SmoothTP(targetCFrame)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
@@ -256,7 +226,6 @@ local function SmoothTP(targetCFrame)
     currentTween:Play()
 end
 
--- FindBestMob: prioritize LOWEST HP mob for faster kills
 local function FindBestMob(NameMon, CFrameMon)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return nil end
@@ -282,7 +251,6 @@ local function FindBestMob(NameMon, CFrameMon)
     end
 
     if #candidates == 0 then
-        -- Fallback: any mob regardless of spawn distance
         for _, mob in pairs(workspace.Enemies:GetChildren()) do
             if mob.Name == NameMon and mob:FindFirstChild("Humanoid") and mob.Humanoid.Health > 0 then
                 local mHrp = mob:FindFirstChild("HumanoidRootPart")
@@ -300,19 +268,15 @@ local function FindBestMob(NameMon, CFrameMon)
 
     if #candidates == 0 then return nil end
 
-    -- Sort: prioritize mobs already damaged (low HP%), then closest
     table.sort(candidates, function(a, b)
-        -- If one is significantly damaged and the other isn't, prefer damaged
         if a.hpPct < 0.6 and b.hpPct >= 0.6 then return true end
         if b.hpPct < 0.6 and a.hpPct >= 0.6 then return false end
-        -- Among similar HP, pick closest
         return a.dist < b.dist
     end)
 
     return candidates[1].mob
 end
 
--- Server Hop (optional)
 local function TryServerHop()
     if not _G.AutoServerHop then return end
     pcall(function()
@@ -331,7 +295,6 @@ local function TryServerHop()
     end)
 end
 
--- ══════════════ ERROR TRACKING ══════════════
 local errorLog = {}
 local function LogError(category, message)
     local entry = "[" .. category .. "] " .. message
@@ -340,7 +303,6 @@ local function LogError(category, message)
     warn("[FARM ERR] " .. entry)
 end
 
--- ══════════════ MAIN FARM LOOP ══════════════
 local questFailedCount = 0
 local bypassQuest = false
 local questCooldown = 0
@@ -349,7 +311,7 @@ local noDmgCounter = 0
 local lastTrackedMob = nil
 local lastTrackedHP = 0
 local totalIdleTime = 0
-local wasQuestActive = false  -- for instant re-take detection
+local wasQuestActive = false
 
 task.spawn(function()
     notifier.update("—", "Initializing...", "waiting")
@@ -368,7 +330,6 @@ task.spawn(function()
         AntiJitter()
         UpdateStats()
 
-        -- Read level
         local level = nil
         local ls = pcall(function() level = player.Data.Level.Value end)
         if not ls or not level then
@@ -377,7 +338,6 @@ task.spawn(function()
             continue
         end
 
-        -- Quest data
         local NameMon, NameQuest, QuestLv, CFrameQ, CFrameMon = GetQuestData(level)
         if not NameMon then
             LogError("QUEST", "GetQuestData nil (Lv " .. tostring(level) .. ")")
@@ -385,22 +345,16 @@ task.spawn(function()
             continue
         end
 
-        -- Quest visibility
         local questActive = false
         pcall(function() questActive = player.PlayerGui.Main.Quest.Visible end)
 
-        -- Detect quest just completed → instant re-take
         local questJustCompleted = wasQuestActive and not questActive
         wasQuestActive = questActive
 
-        --------------------------------------------------------
-        --  PHASE: TAKE QUEST
-        --------------------------------------------------------
         if (not questActive and not bypassQuest) or questJustCompleted then
             notifier.update(NameMon, "Taking quest...", "quest")
             totalIdleTime = 0
 
-            -- Cooldown (skip if quest just completed → instant re-take)
             if not questJustCompleted and tick() - questCooldown < 3.5 then
                 continue
             end
@@ -444,9 +398,6 @@ task.spawn(function()
                 end
             end
 
-        --------------------------------------------------------
-        --  PHASE: FARM MOB
-        --------------------------------------------------------
         else
             local mob = FindBestMob(NameMon, CFrameMon)
 
@@ -473,9 +424,7 @@ task.spawn(function()
                         LogError("WEAPON", "'" .. _G.WeaponType .. "' not found")
                         notifier.update(NameMon, "⚠ No weapon!", "error")
                     else
-                        -- Damage tracking
                         if mob ~= lastTrackedMob then
-                            -- Track kill from previous mob
                             if lastTrackedMob and lastTrackedMob:FindFirstChild("Humanoid")
                             and lastTrackedMob.Humanoid.Health <= 0 then
                                 stats.kills = stats.kills + 1
@@ -510,7 +459,6 @@ task.spawn(function()
                     end
                 end
 
-            -- No mob found — wait at spawn
             else
                 noMobTimer = noMobTimer + 1
                 totalIdleTime = totalIdleTime + 0.15
@@ -533,7 +481,6 @@ task.spawn(function()
                     noMobTimer = 0
                 end
 
-                -- Server hop if idle too long
                 if totalIdleTime > _G.ServerHopTimeout and _G.AutoServerHop then
                     warn("[FARM] Idle > " .. _G.ServerHopTimeout .. "s → hopping server")
                     notifier.update(NameMon, "⚠ Server hop...", "error")
@@ -541,7 +488,6 @@ task.spawn(function()
                     TryServerHop()
                 end
 
-                -- Reset bypass when quest complete
                 if not questActive and bypassQuest then
                     bypassQuest = false
                     questFailedCount = 0
@@ -550,7 +496,6 @@ task.spawn(function()
         end
     end
 
-    -- Cleanup
     CleanupAntiJitter()
     if antiAfkConn then antiAfkConn:Disconnect() end
     notifier.update("—", "Stopped", "waiting")
